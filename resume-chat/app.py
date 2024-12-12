@@ -40,8 +40,21 @@ def auth():
 
 @cl.on_chat_start
 async def on_chat_start():
-    cl.user_session.set("memory", ConversationBufferMemory(return_messages=True))
-    setup_runnable()
+    from pydantic_ai import Agent
+
+    agent = Agent(  
+        'gemini-1.5-flash',
+        system_prompt='Be concise, reply with one sentence.',  
+    )
+
+    result = agent.run_sync('Where does "hello world" come from?')  
+    await cl.Message(content=result.data).send()
+
+    # res = await cl.AskUserMessage(content="What is your name?", timeout=30).send()
+    # if res:
+    #     await cl.Message(
+    #         content=f"Your name is: {res['output']}.\nChainlit installation is working!\nYou can now start building your own chainlit apps!",
+    #     ).send()
 
 
 @cl.on_chat_resume
