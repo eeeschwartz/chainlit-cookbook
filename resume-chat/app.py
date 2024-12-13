@@ -33,16 +33,15 @@ async def on_chat_start():
 @cl.on_message
 async def on_message(message: cl.Message):
     agent = cl.user_session.get("agent")  # type: Agent
-
     prompt = UserPrompt(content=message.content).content
+    msg = cl.Message(content="")
     
-    await cl.Message(content=UserPrompt(content=prompt)).send()
     async with agent.run_stream(prompt, message_history=[]) as result:
-            async for text in result.stream(debounce_by=0.01):
-                # text here is a `str` and the frontend wants
-                # JSON encoded ModelTextResponse, so we create one
+            async for text in result.stream_text(delta=True, debounce_by=0.01):
+                # text here is already the delta (only new content)
                 m = ModelTextResponse(content=text, timestamp=result.timestamp())
-                await cl.Message(content=m.content).send()
+                await msg.stream_token(m.content)
+    await msg.update()
 
     # # Get previous messages to maintain context
     # previous_messages = []
